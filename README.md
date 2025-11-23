@@ -12,6 +12,42 @@ Key characteristics:
 - **Structured**: Support multi-file organization (instructions, templates, scripts, reference materials)
 - **Discoverable**: Claude reads the skill description to determine when it applies
 
+## Philosophy & Design Principles
+
+This repository follows core principles inspired by production-grade skills libraries to ensure quality and reusability:
+
+### Core Principles
+
+1. **Focus over Breadth** — Each skill handles one primary capability
+   - ✓ `typescript-validation` - Single, clear domain
+   - ✗ `general-utilities` - Too broad, unfocused
+
+2. **Clarity for Discovery** — Descriptions guide Claude's automatic skill activation
+   - Precise, action-oriented descriptions
+   - Specific use case triggers
+   - Context-aware language
+
+3. **Simplicity First** — Complexity only when necessary
+   - Self-contained skills with minimal dependencies
+   - Clear folder structure (SKILL.md + optional subdirectories)
+   - Avoid over-engineering
+
+4. **Evidence over Claims** — Practical, tested patterns
+   - Real-world examples in documentation
+   - Clear limitations documented
+   - Proven approaches
+
+5. **Structure for Scalability** — Organized for growth
+   - Standardized skill structure
+   - Optional categorization by domain (testing, debugging, etc.)
+   - Supporting files (reference/, templates/, scripts/) for complex skills
+
+### Design Inspiration
+
+These principles are informed by:
+- [Anthropic's Official Skills Repository](https://github.com/anthropics/skills) - Production-grade examples
+- [Superpowers Repository](https://github.com/obra/superpowers) - Battle-tested skills library
+
 ## Repository Structure
 
 ```
@@ -153,6 +189,14 @@ your-project/
 ```
 
 Claude will automatically discover and use these skills when relevant to your task.
+
+## References
+
+This repository is built on principles and best practices from:
+
+- [Anthropic's Official Skills Repository](https://github.com/anthropics/skills) - Production-grade skill implementations and examples
+- [Superpowers Repository](https://github.com/obra/superpowers) - Battle-tested skills library with systematic organization
+- [Claude Code Skills Documentation](https://code.claude.com/docs/en/skills.md) - Official Claude Code skill guide
 
 ## License
 

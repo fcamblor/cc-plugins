@@ -50,6 +50,71 @@ your-project/
 └── settings.json
 ```
 
+## Organizing Skills by Domain
+
+As your skill collection grows, organizing them by domain (category) improves discoverability and maintainability. This approach is inspired by production-grade libraries like [Superpowers](https://github.com/obra/superpowers).
+
+### Recommended Structure
+
+Group related skills by domain:
+
+```
+skills/
+├── testing/
+│   ├── test-driven-development/
+│   │   └── SKILL.md
+│   └── unit-testing/
+│       └── SKILL.md
+├── debugging/
+│   ├── root-cause-analysis/
+│   │   └── SKILL.md
+│   └── verification/
+│       └── SKILL.md
+├── collaboration/
+│   ├── code-review/
+│   │   └── SKILL.md
+│   └── design-brainstorm/
+│       └── SKILL.md
+├── development/
+│   ├── typescript-validation/
+│   │   └── SKILL.md
+│   └── security-review/
+│       └── SKILL.md
+├── meta/
+│   ├── skill-creator/
+│   │   └── SKILL.md
+│   └── template-skill/
+│       └── SKILL.md
+└── utils/
+    ├── documentation/
+    │   └── SKILL.md
+    └── automation/
+        └── SKILL.md
+```
+
+### Suggested Domains
+
+- **testing/** - Test writing, TDD, validation strategies
+- **debugging/** - Root cause analysis, troubleshooting, verification
+- **collaboration/** - Code review, design, planning, team workflows
+- **development/** - Language-specific skills, architecture, patterns
+- **meta/** - Skill creation, tooling, repository management
+- **utils/** - General utilities, documentation, automation
+
+### Copying Skills by Domain
+
+```bash
+# Copy all testing skills to your project
+cp -r /path/to/cc-skills/skills/testing/* ./.claude/skills/
+
+# Copy specific domain skills globally
+cp -r /path/to/cc-skills/skills/debugging/* ~/.claude/skills/
+
+# Mix and match
+cp -r /path/to/cc-skills/skills/development/typescript-validation ~/.claude/skills/
+cp -r /path/to/cc-skills/skills/collaboration/code-review ~/.claude/skills/
+```
+
 ## Using Skills in Claude Code
 
 Once installed, skills are automatically discovered by Claude. To trigger a skill:
@@ -220,3 +285,11 @@ Once you've installed a skill:
 5. Share improvements back to the repository
 
 For questions about Claude Code skills, see the [README.md](./README.md).
+
+## References
+
+This guide incorporates best practices from:
+
+- [Anthropic's Official Skills Repository](https://github.com/anthropics/skills) - Production-grade skill implementations and examples
+- [Superpowers Repository](https://github.com/obra/superpowers) - Battle-tested skills library with organized domain structure
+- [Claude Code Skills Documentation](https://code.claude.com/docs/en/skills.md) - Official Claude Code skill documentation
