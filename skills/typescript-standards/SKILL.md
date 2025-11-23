@@ -1,11 +1,58 @@
 ---
 name: typescript-standards
-description: TypeScript coding standards and compilation rules for this project. Use this skill whenever working with TypeScript files (.ts, .tsx), configuring tsconfig.json, writing or reviewing TypeScript code, or discussing TypeScript patterns and best practices. Triggers on any TypeScript-related task including code generation, refactoring, code review, and debugging.
+description: |
+  Enforce type-safe TypeScript patterns with Zod validation, pattern matching, and discriminated unions to prevent runtime errors. Use when writing TypeScript code, reviewing for type safety, designing data validation flows, or refactoring to eliminate impossible states.
 ---
 
 # TypeScript Standards
 
-Project-specific TypeScript rules and guidelines. **Read `./reference/typescript-rules.md` for complete documentation.**
+Project-specific TypeScript rules and guidelines enforcing type safety at system boundaries and preventing impossible application states.
+
+## When to Use This Skill
+
+Use this skill when:
+- **Writing new TypeScript code** for production features, utilities, or configuration
+- **Reviewing TypeScript** for type safety issues or refactoring opportunities
+- **Designing validation** for external data (APIs, user input, config files, environment variables)
+- **Modeling complex state** to prevent impossible combinations (UI states, async operations, domain entities)
+- **Deciding between patterns** — Which approach is safer: type guards vs Zod, optional fields vs discriminated unions, assertions vs narrowing?
+
+This skill applies to **production code, shared utilities, and core business logic**.
+
+## When NOT to Use This Skill
+
+Apply pragmatism in these specific cases:
+
+### 1. Legacy Code Integration
+Code actively being migrated to type safety requires strategic pragmatism. Document escape hatches with `// TODO: improve type safety` comments. Converting a legacy codebase is a **multi-step project**, not a single skill application. Focus on new code and critical paths first.
+
+### 2. Third-Party Libraries with Weak Types
+External libraries that don't follow these standards are unavoidable. Solution: **Create adapter/bridge modules** that:
+- Accept the library's loose types at the boundary
+- Parse/validate using your standards internally
+- Export proper types following project conventions
+
+**Example:**
+```ts
+// old-lib-adapter.ts - bridge the gap
+import someLib from 'old-lib';
+
+export function adaptLibFunction(input: unknown) {
+  // Accept old lib's loose types here
+  const result = someLib.process(input as any);
+  // Validate and parse at our boundary
+  return resultSchema.parse(result);
+}
+```
+
+### 3. Tool Selection - Zod, ts-pattern, etc.
+These rules assume your project uses **Zod** for validation and **ts-pattern** for matching. If your project chooses different tools:
+- **Don't force Zod** if using runtime validation differently (e.g., custom validators)
+- **Don't force ts-pattern** if using other pattern matching approaches
+- **Apply equivalent patterns** with your chosen tools
+- **Enforce the principle**, not the library (type safety, boundary validation, exhaustiveness)
+
+Example: If using `io-ts` instead of Zod, follow the same boundary validation pattern with `io-ts.decode()`.
 
 ## Golden Rules (Always Apply)
 
@@ -25,7 +72,7 @@ function process(data: any) { return data.value; }
 const user = response as User;
 const name = user!.name;
 
-// ✅ GOOD  
+// ✅ GOOD
 function process(data: unknown) {
   if (isUser(data)) return data.value;
 }
@@ -90,12 +137,39 @@ type State<T> =
 | Imports | `import type` for types |
 | Enums | Never (use unions + `as const`) |
 
-## When to Consult Full Rules
+---
 
-Read `./reference/typescript-rules.md` for:
-- Detailed examples of each tier (1-4)
-- Brand types implementation
-- `readonly` usage guidelines
-- Error handling patterns (Result types)
-- Legacy/third-party code strategies
-- Performance hotspot handling
+## Full Reference & Deep Dives
+
+For comprehensive rules, advanced patterns, and edge cases, consult `./reference/typescript-rules.md`:
+
+| Topic | Why Check | When |
+|-------|-----------|------|
+| **TIER 1 - Critical** | Foundation rules on type safety | Always - understand before coding |
+| **TIER 2 - Very Important** | Return types, brand types, `readonly` | When building boundaries |
+| **TIER 3 - Important** | Naming conventions, exports, enums | During code review |
+| **TIER 4 - Advanced** | Zod deep dives, ts-pattern guards, recursion | When solving complex problems |
+| **Pragmatism Section** | Legacy code strategies | When modernizing existing code |
+
+**Key Topics in Reference:**
+- Brand types implementation (prevent UserId ≠ ProductId confusion)
+- Result types for recoverable errors (vs throwing)
+- Recursive Zod schemas (comments, nested structures)
+- Working with third-party `any` types (adapter pattern)
+- Performance hotspots (when to relax for speed)
+
+---
+
+## Quick Answers
+
+**Q: When do I need Zod vs type guards?**
+Zod for untrusted boundaries (APIs, user input, env). Type guards for trusted internal data.
+
+**Q: Should I use brand types?**
+When you have similar primitives (UserId, ProductId, OrderId). See TIER 2 in reference.
+
+**Q: Can I use `as` type assertions?**
+Only as last resort. Try: validation → `satisfies` → type narrowing → guards → assertions.
+
+**Q: When should I relax these standards?**
+See "When NOT to Use This Skill" section above. Document escapes with `// TODO: improve type safety`.
