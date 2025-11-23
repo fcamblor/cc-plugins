@@ -1,0 +1,29 @@
+# OS and Editor Files
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.env.local
+
+# Node/npm (if skills include Node-based scripts)
+node_modules/
+npm-debug.log
+yarn.lock
+
+# Python (if skills include Python scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+
+# Temporary Files
+.tmp/
+tmp/
+*.bak
+
+# Local Test Files
+test-output/
+.claude/skills/test-*
