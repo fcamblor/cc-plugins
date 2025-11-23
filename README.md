@@ -128,7 +128,11 @@ cp -r cc-skills/skills/* ~/.claude/skills/
 
 ## Available Skills
 
-See [INSTALLATION.md](./INSTALLATION.md) for detailed setup instructions and available skills.
+| Skill | Description |
+|-------|-------------|
+| **typescript-standards** | TypeScript coding standards, validation patterns, and best practices. Use when working with TypeScript files, code review, or type safety questions. |
+
+See [INSTALLATION.md](./INSTALLATION.md) for detailed setup instructions.
 
 ## Creating Your First Skill
 

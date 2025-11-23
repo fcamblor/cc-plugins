@@ -158,7 +158,7 @@ Currently available skills in this repository:
 
 | Skill | Description | Location |
 |-------|-------------|----------|
-| *(To be added)* | - | `skills/` |
+| **typescript-standards** | TypeScript coding standards, validation patterns, and best practices. Covers type safety, Zod validation, ts-pattern matching, naming conventions, and pragmatic approaches for legacy code. | `skills/typescript-standards/` |
 
 ## Creating Your Own Skill
 
