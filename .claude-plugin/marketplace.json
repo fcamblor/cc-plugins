@@ -1,34 +1,21 @@
 {
-  "name": "fcamblor-cc-skills",
+  "name": "fcamblor-cc-plugins",
   "owner": {
     "name": "fcamblor"
   },
   "metadata": {
-    "description": "A curated collection of reusable Claude Code skills for TypeScript development and beyond",
-    "version": "1.0.0"
+    "description": "A curated collection of reusable Claude Code plugins",
+    "version": "0.0.1"
   },
   "plugins": [
     {
       "name": "typescript-standards",
-      "source": "./skills/typescript-standards",
+      "source": "./plugins/typescript-standards",
       "description": "Enforce type-safe TypeScript patterns with Zod validation, pattern matching, and discriminated unions to prevent runtime errors",
-      "version": "1.0.0",
       "author": {
         "name": "fcamblor"
       },
       "keywords": ["typescript", "type-safety", "zod", "validation", "best-practices"],
-      "category": "development",
-      "license": "MIT"
-    },
-    {
-      "name": "template-skill",
-      "source": "./skills/template-skill",
-      "description": "Template for creating new Claude Code skills with proper structure, documentation patterns, and organization",
-      "version": "1.0.0",
-      "author": {
-        "name": "fcamblor"
-      },
-      "keywords": ["template", "skill-development", "documentation"],
       "category": "development",
       "license": "MIT"
     }
