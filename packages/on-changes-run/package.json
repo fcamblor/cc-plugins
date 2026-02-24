@@ -1,0 +1,32 @@
+{
+  "name": "@fcamblor/on-changes-run",
+  "version": "0.0.1",
+  "description": "Claude Code lifecycle hook: run commands when file changes are detected",
+  "license": "MIT",
+  "author": {
+    "name": "fcamblor"
+  },
+  "type": "module",
+  "bin": {
+    "on-changes-run": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "commander": "^13.0.0",
+    "picomatch": "^4.0.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.8.0",
+    "@types/node": "^22.0.0",
+    "@types/picomatch": "^3.0.0"
+  }
+}
