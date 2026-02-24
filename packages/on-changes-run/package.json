@@ -1,6 +1,6 @@
 {
   "name": "@fcamblor/on-changes-run",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Claude Code lifecycle hook: run commands when file changes are detected",
   "license": "MIT",
   "author": {
