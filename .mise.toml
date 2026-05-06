@@ -1,0 +1,278 @@
+[tasks.release]
+description = "Prepare a release with independent marketplace and plugin versions"
+run = """
+#!/bin/bash
+set -e
+
+MARKETPLACE_JSON="{{config_root}}/.claude-plugin/marketplace.json"
+CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+
+echo "📦 Release Management"
+echo
+
+# Step 1: Get marketplace version
+echo "Step 1: Marketplace Version"
+echo "=============================="
+
+# Get current marketplace version from last tag on main
+CURRENT_TAG=$(git describe --tags --abbrev=0 origin/main 2>/dev/null || echo "")
+
+if [ -z "$CURRENT_TAG" ]; then
+  echo "⚠️  No tags found on origin/main, using 0.0.0 as base"
+  CURRENT_MARKETPLACE_VERSION="0.0.0"
+else
+  # Remove 'v' prefix if present
+  CURRENT_MARKETPLACE_VERSION="${CURRENT_TAG#v}"
+  echo "Current version (from git tag): v$CURRENT_MARKETPLACE_VERSION"
+fi
+
+# Calculate suggested version (increment patch)
+SUGGESTED_VERSION=$(echo "$CURRENT_MARKETPLACE_VERSION" | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
+echo "Suggested version: v$SUGGESTED_VERSION"
+echo
+
+read -p "Enter marketplace version (X.Y.Z) [default: $SUGGESTED_VERSION]: " MARKETPLACE_VERSION < /dev/tty
+
+# Use suggested version if empty
+if [ -z "$MARKETPLACE_VERSION" ]; then
+  MARKETPLACE_VERSION="$SUGGESTED_VERSION"
+  echo "Using suggested version: v$MARKETPLACE_VERSION"
+fi
+
+# Validate marketplace version format
+if ! printf '%s' "$MARKETPLACE_VERSION" | grep -qE '^[0-9]+\\.[0-9]+\\.[0-9]+$'; then
+  echo "❌ Invalid version format: $MARKETPLACE_VERSION"
+  echo "   Use semantic versioning (ex: 1.0.0)"
+  exit 1
+fi
+
+echo "✓ Marketplace version set to: v$MARKETPLACE_VERSION"
+echo
+
+# Step 2: Detect modified plugins since last tag
+echo "Step 2: Detecting Modified Plugins"
+echo "===================================="
+
+LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+if [ -z "$LAST_TAG" ]; then
+  echo "ℹ️  No previous tags found. Will check all plugins."
+  MODIFIED_PLUGINS=$(find plugins -maxdepth 1 -type d ! -name 'plugins' | sed 's|plugins/||' | sort)
+else
+  echo "📌 Last tag: $LAST_TAG"
+  MODIFIED_PLUGINS=$(git diff $LAST_TAG HEAD --name-only | grep '^plugins/' | cut -d'/' -f2 | sort | uniq)
+fi
+
+if [ -z "$MODIFIED_PLUGINS" ]; then
+  echo "✓ No plugins have been modified since last tag."
+  MODIFIED_PLUGINS=""
+else
+  echo "✓ Modified plugins:"
+  for PLUGIN in $MODIFIED_PLUGINS; do
+    PLUGIN_JSON="{{config_root}}/plugins/$PLUGIN/.claude-plugin/plugin.json"
+    if [ -f "$PLUGIN_JSON" ]; then
+      PLUGIN_VERSION=$(grep '"version"' "$PLUGIN_JSON" | head -1 | awk -F'"' '{print $4}')
+      echo "  - $PLUGIN (current: v$PLUGIN_VERSION)"
+    else
+      echo "  - $PLUGIN"
+    fi
+  done
+fi
+
+echo
+
+# Step 3: Get versions for modified plugins
+echo "Step 3: Plugin Versions"
+echo "======================="
+
+# Use temp file to store plugin versions (portable alternative to associative arrays)
+VERSIONS_FILE=$(mktemp)
+trap "rm -f $VERSIONS_FILE" EXIT
+
+# Get all plugins
+ALL_PLUGINS=$(find plugins -maxdepth 1 -type d ! -name 'plugins' | sed 's|plugins/||' | sort)
+
+for PLUGIN in $ALL_PLUGINS; do
+  PLUGIN_JSON="{{config_root}}/plugins/$PLUGIN/.claude-plugin/plugin.json"
+
+  if [ ! -f "$PLUGIN_JSON" ]; then
+    continue
+  fi
+
+  CURRENT_VERSION=$(grep '"version"' "$PLUGIN_JSON" | head -1 | awk -F'"' '{print $4}')
+
+  if echo "$MODIFIED_PLUGINS" | grep -q "^$PLUGIN$"; then
+    # Plugin was modified - ask for new version
+    echo "Plugin: $PLUGIN"
+    echo "  Current version: v$CURRENT_VERSION"
+
+    # Calculate suggested version (increment patch)
+    SUGGESTED_PLUGIN_VERSION=$(echo "$CURRENT_VERSION" | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
+    echo "  Suggested version: v$SUGGESTED_PLUGIN_VERSION"
+
+    read -p "  New version (X.Y.Z) [default: $SUGGESTED_PLUGIN_VERSION]: " NEW_VERSION < /dev/tty
+
+    # Use suggested version if empty
+    if [ -z "$NEW_VERSION" ]; then
+      NEW_VERSION="$SUGGESTED_PLUGIN_VERSION"
+      echo "  Using suggested version: v$NEW_VERSION"
+    fi
+
+    # Validate plugin version format
+    if ! printf '%s' "$NEW_VERSION" | grep -qE '^[0-9]+\\.[0-9]+\\.[0-9]+$'; then
+      echo "  ❌ Invalid version format: $NEW_VERSION"
+      exit 1
+    fi
+
+    echo "$PLUGIN=$NEW_VERSION" >> "$VERSIONS_FILE"
+    echo "  ✓ Version set to: v$NEW_VERSION"
+  else
+    # Plugin was not modified - keep current version
+    echo "$PLUGIN=$CURRENT_VERSION" >> "$VERSIONS_FILE"
+  fi
+  echo
+done
+
+# Step 4: Confirm changes
+echo "Step 4: Review Changes"
+echo "======================"
+echo "Marketplace version: v$MARKETPLACE_VERSION"
+echo "Plugin versions:"
+while IFS='=' read -r PLUGIN VERSION; do
+  echo "  - $PLUGIN: v$VERSION"
+done < "$VERSIONS_FILE"
+echo
+
+read -p "Proceed with release? (yes/no): " CONFIRM < /dev/tty
+if [ "$CONFIRM" != "yes" ]; then
+  echo "❌ Release cancelled."
+  exit 1
+fi
+
+echo
+
+# Step 5: Apply changes
+echo "Step 5: Applying Changes"
+echo "========================"
+
+git checkout main
+git merge --no-ff --no-commit $CURRENT_BRANCH
+
+# Portable sed function for macOS and Linux
+update_json() {
+  local file="$1"
+  local version="$2"
+  if [ "$(uname)" = "Darwin" ]; then
+    sed -i '' 's/"version": "[^"]*"/"version": "'$version'"/' "$file"
+  else
+    sed -i 's/"version": "[^"]*"/"version": "'$version'"/' "$file"
+  fi
+}
+
+# Update marketplace.json
+echo "📝 Updating $MARKETPLACE_JSON..."
+update_json "$MARKETPLACE_JSON" "$MARKETPLACE_VERSION"
+
+# Update each plugin.json
+while IFS='=' read -r PLUGIN PLUGIN_VERSION; do
+  PLUGIN_JSON="{{config_root}}/plugins/$PLUGIN/.claude-plugin/plugin.json"
+
+  if [ ! -f "$PLUGIN_JSON" ]; then
+    continue
+  fi
+
+  echo "📝 Updating $PLUGIN_JSON to v$PLUGIN_VERSION..."
+  update_json "$PLUGIN_JSON" "$PLUGIN_VERSION"
+done < "$VERSIONS_FILE"
+
+# Update CHANGELOG.md
+CHANGELOG_FILE="{{config_root}}/CHANGELOG.md"
+if [ -f "$CHANGELOG_FILE" ]; then
+  echo "📝 Updating CHANGELOG.md..."
+
+  # Get current date in YYYY-MM-DD format
+  RELEASE_DATE=$(date +%Y-%m-%d)
+
+  # Check if [Unreleased] section exists
+  if ! grep -q "^## \\[Unreleased\\]" "$CHANGELOG_FILE"; then
+    # Add [Unreleased] section at the top if it doesn't exist
+    FIRST_VERSION_LINE=$(grep -n "^## \\[" "$CHANGELOG_FILE" | head -1 | cut -d: -f1)
+
+    if [ -n "$FIRST_VERSION_LINE" ]; then
+      {
+        head -n $((FIRST_VERSION_LINE - 1)) "$CHANGELOG_FILE"
+        echo "## [Unreleased]"
+        echo ""
+        tail -n +$FIRST_VERSION_LINE "$CHANGELOG_FILE"
+      } > "$CHANGELOG_FILE.tmp"
+      mv "$CHANGELOG_FILE.tmp" "$CHANGELOG_FILE"
+    fi
+  fi
+
+  # Insert new version entry after [Unreleased]
+  UNRELEASED_LINE=$(grep -n "^## \\[Unreleased\\]" "$CHANGELOG_FILE" | cut -d: -f1)
+
+  if [ -n "$UNRELEASED_LINE" ]; then
+    INSERT_LINE=$((UNRELEASED_LINE + 2))
+
+    {
+      head -n $((INSERT_LINE - 1)) "$CHANGELOG_FILE"
+      echo "## [$MARKETPLACE_VERSION] - $RELEASE_DATE"
+      echo ""
+      echo "### Changes"
+      echo ""
+      echo "- Release version $MARKETPLACE_VERSION"
+      echo ""
+      echo "---"
+      echo ""
+      tail -n +$INSERT_LINE "$CHANGELOG_FILE"
+    } > "$CHANGELOG_FILE.tmp"
+    mv "$CHANGELOG_FILE.tmp" "$CHANGELOG_FILE"
+
+    echo "✓ CHANGELOG.md updated with version $MARKETPLACE_VERSION"
+  fi
+
+  git add "$CHANGELOG_FILE"
+fi
+
+# Step 6: Commit and tag
+echo
+echo "Step 6: Commit and Tag"
+echo "======================"
+
+echo "📝 Creating release commit..."
+git add "$MARKETPLACE_JSON" plugins/*/.claude-plugin/plugin.json
+
+git commit -m "chore: release v$MARKETPLACE_VERSION
+
+Updated marketplace version and plugin versions:
+- Marketplace: v$MARKETPLACE_VERSION
+$(while IFS='=' read -r PLUGIN VERSION; do
+  echo "- $PLUGIN: v$VERSION"
+done < "$VERSIONS_FILE")" || true
+
+echo "🏷️  Creating git tag v$MARKETPLACE_VERSION..."
+git tag -a "v$MARKETPLACE_VERSION" -m "Release version $MARKETPLACE_VERSION" || true
+
+echo "📤 Pushing tag to remote..."
+git push origin "v$MARKETPLACE_VERSION" 2>/dev/null || {
+  echo "⚠️  Could not push tag directly."
+}
+
+echo "📤 Pushing main to remote..."
+git push origin main 2>/dev/null || {
+  echo "⚠️  Could not push main directly."
+}
+
+# Checkout back to original branch
+git checkout $CURRENT_BRANCH
+
+echo
+echo "✅ Release v$MARKETPLACE_VERSION completed!"
+echo "   • Marketplace version: v$MARKETPLACE_VERSION"
+while IFS='=' read -r PLUGIN VERSION; do
+  echo "   • $PLUGIN: v$VERSION"
+done < "$VERSIONS_FILE"
+echo "   • Created git tag v$MARKETPLACE_VERSION"
+echo "   • Pushed tag to remote"
+"""
