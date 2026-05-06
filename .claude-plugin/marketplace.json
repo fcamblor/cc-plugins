@@ -18,6 +18,17 @@
       "keywords": ["typescript", "type-safety", "zod", "validation", "best-practices"],
       "category": "development",
       "license": "MIT"
+    },
+    {
+      "name": "oss-security-audit",
+      "source": "./plugins/oss-security-audit",
+      "description": "Security audit of third-party packages (npm, pip, homebrew, cargo…) — detects network calls, telemetry, eval, install hooks and recursively audits same-author dependencies",
+      "author": {
+        "name": "fcamblor"
+      },
+      "keywords": ["security", "audit", "npm", "supply-chain", "oss", "telemetry", "dependency-audit"],
+      "category": "utilities",
+      "license": "MIT"
     }
   ]
 }
