@@ -1,6 +1,6 @@
 {
   "name": "oss-security-audit",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "Security audit of third-party packages (npm, pip, homebrew, cargo…) by fetching and analyzing their source code. Detects network calls, telemetry, eval, install hooks, and suspicious file writes. Recursively audits same-author dependencies.",
   "author": {
     "name": "fcamblor"

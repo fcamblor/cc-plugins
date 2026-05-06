@@ -1,6 +1,6 @@
 {
   "name": "typescript-standards",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Enforce type-safe TypeScript patterns with Zod validation, pattern matching, and discriminated unions. Provides comprehensive guidelines for preventing runtime errors through compile-time type safety.",
   "author": {
     "name": "fcamblor"

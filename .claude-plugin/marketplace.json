@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "A curated collection of reusable Claude Code plugins",
-    "version": "0.0.1"
+    "version": "0.0.2"
   },
   "plugins": [
     {
